@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ChatWave 💬</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a1628;--sidebar:#0d1f3c;--card:#111e38;
+  --accent:#25d366;--accent2:#128c7e;
+  --text:#e8edf5;--muted:#8899b0;
+  --bubble-out:#25d366;--bubble-in:#1a2f52;
+  --input-bg:#0f1e38;--border:#1e3458;--red:#e74c3c;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+
+/* ===== SETUP SCREEN ===== */
+#setup-screen{display:flex;align-items:center;justify-content:center;height:100vh;background:radial-gradient(ellipse at 30% 50%,#0d2a4a,#0a1628);padding:20px}
+.setup-box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:40px 36px;width:100%;max-width:500px;box-shadow:0 32px 80px rgba(0,0,0,.5)}
+.setup-box h2{font-size:22px;font-weight:800;margin-bottom:6px;color:var(--accent)}
+.setup-box .sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.steps{background:#0a1628;border-radius:12px;padding:16px 20px;margin-bottom:20px;counter-reset:step}
+.step{font-size:13px;color:var(--muted);padding:5px 0;counter-increment:step;display:flex;gap:8px;align-items:flex-start}
+.step::before{content:counter(step);color:var(--accent);font-weight:800;flex-shrink:0}
+.step b{color:var(--text)}
+.step code{background:#111e38;padding:1px 5px;border-radius:4px;font-size:11px;color:var(--accent)}
+.cfg-input{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;margin-bottom:8px;transition:border .2s}
+.cfg-input:focus{border-color:var(--accent)}
+.cfg-input::placeholder{color:var(--muted);font-size:12px}
+.setup-btn{width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-size:15px;font-weight:800;font-family:inherit;transition:opacity .2s;margin-top:4px}
+.setup-btn:hover{opacity:.9}
+.setup-err{color:var(--red);font-size:12px;margin-top:8px;display:none;padding:8px 12px;background:rgba(231,76,60,.1);border-radius:8px}
+
+/* ===== AUTH ===== */
+#auth-screen{display:none;align-items:center;justify-content:center;height:100vh;background:radial-gradient(ellipse at 30% 50%,#0d2a4a,#0a1628)}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:44px 40px;width:420px;max-width:95vw;box-shadow:0 32px 80px rgba(0,0,0,.5)}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.auth-logo .logo-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:24px}
+.auth-logo h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.auth-logo h1 span{color:var(--accent)}
+.auth-tabs{display:flex;margin-bottom:28px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.auth-tab{flex:1;padding:11px;text-align:center;cursor:pointer;font-size:14px;font-weight:700;background:transparent;color:var(--muted);border:none;font-family:inherit;transition:all .2s}
+.auth-tab.active{background:var(--accent);color:#000}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input{width:100%;padding:13px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border .2s}
+.form-group input:focus{border-color:var(--accent)}
+.auth-btn{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-size:16px;font-weight:800;font-family:inherit;margin-top:8px;transition:opacity .2s,transform .1s}
+.auth-btn:hover{opacity:.9;transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-error{color:var(--red);font-size:13px;margin-top:10px;text-align:center;padding:10px;background:rgba(231,76,60,.1);border-radius:8px;display:none}
+
+/* ===== APP ===== */
+#app-screen{display:none;height:100vh;flex-direction:row}
+#app-screen.visible{display:flex}
+.sidebar{width:340px;min-width:340px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.sidebar-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-header h2{font-size:20px;font-weight:800}
+.sidebar-header h2 span{color:var(--accent)}
+.user-badge{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:8px 12px;border:1px solid var(--border)}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#000;flex-shrink:0}
+.avatar.lg{width:44px;height:44px;font-size:18px}
+.sidebar-search{padding:12px 16px;border-bottom:1px solid var(--border)}
+.sidebar-search input{width:100%;padding:10px 16px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.sidebar-search input::placeholder{color:var(--muted)}
+.sidebar-label{padding:10px 16px 4px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.users-list{flex:1;overflow-y:auto;padding:6px 8px}
+.users-list::-webkit-scrollbar{width:4px}
+.users-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.user-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;cursor:pointer;transition:background .15s;position:relative;border:1px solid transparent}
+.user-item:hover{background:var(--card)}
+.user-item.active{background:rgba(37,211,102,.08);border-color:rgba(37,211,102,.2)}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.online-dot{position:absolute;bottom:12px;left:36px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--sidebar)}
+.logout-btn{margin:12px;padding:11px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.logout-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0}
+.chat-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:var(--sidebar)}
+.chat-header-info h3{font-size:16px;font-weight:800}
+.chat-header-info p{font-size:12px;color:var(--accent);font-weight:600}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:6px;background:radial-gradient(ellipse at 80% 10%,#0d2540,#080f1e)}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.day-divider{text-align:center;font-size:11px;color:var(--muted);padding:8px 0;font-weight:700;letter-spacing:.5px}
+.msg-bubble{max-width:70%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;position:relative;word-break:break-word;animation:popIn .15s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.msg-bubble.out{align-self:flex-end;background:var(--bubble-out);color:#000;border-bottom-right-radius:4px}
+.msg-bubble.in{align-self:flex-start;background:var(--bubble-in);color:var(--text);border-bottom-left-radius:4px}
+.msg-sender{font-size:11px;font-weight:800;margin-bottom:3px;color:var(--accent2)}
+.msg-bubble.out .msg-sender{display:none}
+.msg-ts{font-size:10px;margin-top:4px;opacity:.7;text-align:right}
+.msg-bubble.out .msg-ts{color:rgba(0,0,0,.6)}
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted)}
+.chat-input-area{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:12px;align-items:center;background:var(--sidebar)}
+.chat-input-area textarea{flex:1;padding:13px 18px;border-radius:24px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;font-family:inherit;outline:none;resize:none;max-height:120px;line-height:1.5;transition:border .2s}
+.chat-input-area textarea:focus{border-color:var(--accent)}
+.chat-input-area textarea::placeholder{color:var(--muted)}
+.send-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;transition:transform .15s}
+.send-btn:hover{transform:scale(1.08)}
+.send-btn:active{transform:scale(.95)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+#welcome-pane{display:flex}
+#chat-pane{display:none;flex-direction:column;flex:1}
+#chat-pane.show{display:flex}
+.c0{background:#25d366}.c1{background:#0088cc}.c2{background:#e74c3c}
+.c3{background:#f39c12}.c4{background:#9b59b6}.c5{background:#e67e22}
+.c6{background:#1abc9c}.c7{background:#3498db}
+@media(max-width:700px){
+  .sidebar{width:100%;min-width:0;position:absolute;z-index:10;height:100vh;transition:transform .3s}
+  .sidebar.hidden{transform:translateX(-100%)}
+  .chat-area{position:absolute;width:100%;height:100vh}
+  .back-btn{display:flex!important}
+}
+.back-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--card);border:none;cursor:pointer;color:var(--text);font-size:18px}
+</style>
+</head>
+<body>
+
+<!-- ===== FIREBASE SETUP ===== -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <h2>🔧 Firebase Setup (Ek Baar)</h2>
+    <p class="sub">ChatWave ko real multi-user banane ke liye Firebase chahiye — <b>bilkul free</b> hai!</p>
+    <div class="steps">
+      <div class="step"><span>Jaao <b>console.firebase.google.com</b> → New Project banao</span></div>
+      <div class="step"><span>Left menu: <b>Build → Realtime Database → Create Database → Test mode</b></span></div>
+      <div class="step"><span>Project Overview → <b>&lt;/&gt; Web icon</b> → App register karo</span></div>
+      <div class="step"><span><code>firebaseConfig</code> milega — neeche values paste karo</span></div>
+    </div>
+    <button class="setup-btn" onclick="saveConfig()">✅ Save &amp; Shuru Karo</button>
+    <div class="setup-err" id="setup-err">Sab fields bharo bhai!</div>
+  </div>
+</div>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">💬</div>
+      <h1>Chat<span>Wave</span></h1>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+    <div id="login-form">
+      <div class="form-group"><label>Username</label>
+        <input type="text" id="li-user" placeholder="Apna username likho" autocomplete="off"/></div>
+      <div class="form-group"><label>Password</label>
+        <input type="password" id="li-pass" placeholder="Apna password likho" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button class="auth-btn" id="li-btn" onclick="doLogin()">Login →</button>
+      <div class="auth-error" id="li-err"></div>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div class="form-group"><label>Poora Naam</label>
+        <input type="text" id="su-name" placeholder="Tumhara naam" autocomplete="off"/></div>
+      <div class="form-group"><label>Username</label>
+        <input type="text" id="su-user" placeholder="Unique username (a-z, 0-9, _)" autocomplete="off"/></div>
+      <div class="form-group"><label>Password</label>
+        <input type="password" id="su-pass" placeholder="Min 4 characters" onkeydown="if(event.key==='Enter')doSignup()"/></div>
+      <button class="auth-btn" id="su-btn" onclick="doSignup()">Account Banao →</button>
+      <div class="auth-error" id="su-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-screen">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Chat<span>Wave</span></h2>
+      <div class="user-badge">
+        <div class="avatar" id="my-av"></div>
+        <span id="my-name" style="font-size:13px;font-weight:700"></span>
+      </div>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="search-inp" placeholder="🔍 Users dhundo..." oninput="filterUsers()"/>
+    </div>
+    <div class="sidebar-label">All Users</div>
+    <div class="users-list" id="users-list"></div>
+    <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+  </div>
+  <div class="chat-area">
+    <div id="welcome-pane" class="empty-chat">
+      <div style="font-size:60px">💬</div>
+      <p style="font-size:16px;font-weight:700">Kisi ko select karo chat karne ke liye</p>
+      <small style="font-size:13px;color:var(--muted)">Real-time messages — Firebase mein save hote hain</small>
+    </div>
+    <div id="chat-pane">
+      <div class="chat-header">
+        <button class="back-btn" onclick="document.getElementById('sidebar').classList.remove('hidden')">←</button>
+        <div class="avatar lg" id="ch-av"></div>
+        <div class="chat-header-info">
+          <h3 id="ch-name"></h3>
+          <p id="ch-status">online</p>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-msgs"></div>
+      <div class="chat-input-area">
+        <textarea id="msg-inp" rows="1" placeholder="Message likho..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, push, onValue, off }
+                               from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const STORAGE_KEY = 'cw_fb_config';
+const SESSION_KEY = 'cw_session';
+let db, ME, CHAT_WITH, ALL_USERS = [], msgUnsub = null, usersUnsub = null;
+
+// ── Helpers ──────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str+'__cw'));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showErr(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; setTimeout(()=>e.style.display='none',4000); }
+function setBtn(id,disabled,text){ const b=document.getElementById(id); b.disabled=disabled; b.textContent=text; }
+function msgPath(){ return 'messages/'+[ME.username,CHAT_WITH.username].sort().join('__'); }
+
+// ── Setup ────────────────────────────────────────────────────
+window.saveConfig = function(){
+  const apiKey     = "AIzaSyAn3FlqVuimskVhAkL9roe-zm99wHRd2Ng";
+  const authDomain = "chatwave-e5b1c.firebaseapp.com";
+  const databaseURL= "https://chatwave-e5b1c-default-rtdb.firebaseio.com";
+  const projectId  = "chatwave-e5b1c";
+  if(!apiKey||!authDomain||!databaseURL||!projectId){
+    const e=document.getElementById('setup-err'); e.style.display='block';
+    setTimeout(()=>e.style.display='none',3000); return;
+  }
+  const cfg={apiKey,authDomain,databaseURL,projectId};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(cfg));
+  bootFirebase(cfg);
+};
+
+function bootFirebase(cfg){
+  try{
+    const app=initializeApp(cfg);
+    db=getDatabase(app);
+    document.getElementById('setup-screen').style.display='none';
+    const s=localStorage.getItem(SESSION_KEY);
+    if(s){ try{ ME=JSON.parse(s); enterApp(); return; }catch(e){} }
+    document.getElementById('auth-screen').style.display='flex';
+  }catch(e){ alert('Firebase config galat hai!\n'+e.message); localStorage.removeItem(STORAGE_KEY); }
+}
+
+// ── Auth tab ─────────────────────────────────────────────────
+window.switchTab=function(t){
+  ['login','signup'].forEach((x,i)=>{
+    document.querySelectorAll('.auth-tab')[i].classList.toggle('active',x===t);
+    document.getElementById(x+'-form').style.display=x===t?'block':'none';
+  });
+};
+
+// ── Signup ───────────────────────────────────────────────────
+window.doSignup=async function(){
+  const name=document.getElementById('su-name').value.trim();
+  const user=document.getElementById('su-user').value.trim().toLowerCase();
+  const pass=document.getElementById('su-pass').value;
+  if(!name||!user||!pass) return showErr('su-err','Sab fields bharo!');
+  if(pass.length<4) return showErr('su-err','Password min 4 chars ka hona chahiye!');
+  if(!/^[a-z0-9_]+$/.test(user)) return showErr('su-err','Username: sirf a-z, 0-9, _ allowed hai');
+  setBtn('su-btn',true,'⏳ Bana rahe hain...');
+  try{
+    const snap=await get(ref(db,`users/${user}`));
+    if(snap.exists()){ showErr('su-err','Ye username pehle se le liya hai!'); setBtn('su-btn',false,'Account Banao →'); return; }
+    const allSnap=await get(ref(db,'users'));
+    const colorIdx=allSnap.exists()?Object.keys(allSnap.val()).length%8:0;
+    await set(ref(db,`users/${user}`),{name,username:user,password:await sha256(pass),colorIdx,createdAt:Date.now()});
+    ME={name,username:user,colorIdx};
+    localStorage.setItem(SESSION_KEY,JSON.stringify(ME));
+    enterApp();
+  }catch(e){ showErr('su-err','Error: '+e.message); }
+  setBtn('su-btn',false,'Account Banao →');
+};
+
+// ── Login ────────────────────────────────────────────────────
+window.doLogin=async function(){
+  const user=document.getElementById('li-user').value.trim().toLowerCase();
+  const pass=document.getElementById('li-pass').value;
+  if(!user||!pass) return showErr('li-err','Dono fields bharo!');
+  setBtn('li-btn',true,'⏳ Login ho rahe hain...');
+  try{
+    const snap=await get(ref(db,`users/${user}`));
+    if(!snap.exists()){ showErr('li-err','User nahi mila!'); setBtn('li-btn',false,'Login →'); return; }
+    const d=snap.val();
+    if(d.password!==await sha256(pass)){ showErr('li-err','Galat password!'); setBtn('li-btn',false,'Login →'); return; }
+    ME={name:d.name,username:d.username,colorIdx:d.colorIdx};
+    localStorage.setItem(SESSION_KEY,JSON.stringify(ME));
+    enterApp();
+  }catch(e){ showErr('li-err','Error: '+e.message); }
+  setBtn('li-btn',false,'Login →');
+};
+
+// ── Logout ───────────────────────────────────────────────────
+window.doLogout=function(){
+  if(msgUnsub) msgUnsub();
+  if(usersUnsub) usersUnsub();
+  localStorage.removeItem(SESSION_KEY);
+  ME=null; CHAT_WITH=null;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+};
+
+// ── Enter App ────────────────────────────────────────────────
+function enterApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+  document.getElementById('my-av').textContent=ME.name[0].toUpperCase();
+  document.getElementById('my-av').className=`avatar c${ME.colorIdx}`;
+  document.getElementById('my-name').textContent=ME.name;
+  usersUnsub=onValue(ref(db,'users'),snap=>{
+    const d=snap.val()||{};
+    ALL_USERS=Object.values(d).filter(u=>u.username!==ME.username);
+    renderUsers();
+  });
+}
+
+// ── Render Users ─────────────────────────────────────────────
+function renderUsers(filter=''){
+  const list=document.getElementById('users-list');
+  const shown=filter?ALL_USERS.filter(u=>u.name.toLowerCase().includes(filter)||u.username.toLowerCase().includes(filter)):ALL_USERS;
+  if(!shown.length){
+    list.innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">${filter?'Koi nahi mila':'Abhi koi aur user nahi.<br>Kisi aur device pe sign up karo!'}</div>`;
+    return;
+  }
+  list.innerHTML=shown.map(u=>{
+    const active=CHAT_WITH&&CHAT_WITH.username===u.username;
+    return `<div class="user-item${active?' active':''}" onclick="openChat('${u.username}')">
+      <div class="avatar c${u.colorIdx}">${u.name[0].toUpperCase()}</div>
+      <div class="online-dot"></div>
+      <div class="user-info">
+        <div class="user-name">${esc(u.name)}</div>
+        <div class="user-preview">@${u.username}</div>
+      </div></div>`;
+  }).join('');
+}
+
+window.filterUsers=function(){ renderUsers(document.getElementById('search-inp').value.trim().toLowerCase()); };
+
+// ── Open Chat ────────────────────────────────────────────────
+window.openChat=function(username){
+  CHAT_WITH=ALL_USERS.find(u=>u.username===username);
+  if(!CHAT_WITH) return;
+  if(msgUnsub) msgUnsub();
+  document.getElementById('ch-av').textContent=CHAT_WITH.name[0].toUpperCase();
+  document.getElementById('ch-av').className=`avatar lg c${CHAT_WITH.colorIdx}`;
+  document.getElementById('ch-name').textContent=CHAT_WITH.name;
+  document.getElementById('ch-status').textContent=`@${CHAT_WITH.username} • online`;
+  document.getElementById('welcome-pane').style.display='none';
+  document.getElementById('chat-pane').classList.add('show');
+  renderUsers(document.getElementById('search-inp').value.toLowerCase());
+  msgUnsub=onValue(ref(db,msgPath()),snap=>{
+    const d=snap.val()||{};
+    renderMessages(Object.values(d).sort((a,b)=>a.ts-b.ts));
+  });
+  if(window.innerWidth<=700) document.getElementById('sidebar').classList.add('hidden');
+  document.getElementById('msg-inp').focus();
+};
+
+// ── Render Messages ──────────────────────────────────────────
+function renderMessages(msgs){
+  const box=document.getElementById('chat-msgs');
+  const atBottom=box.scrollHeight-box.clientHeight<=box.scrollTop+80;
+  if(!msgs.length){
+    box.innerHTML=`<div class="empty-chat" style="flex:1"><div style="font-size:50px">👋</div><p style="font-size:14px;color:var(--muted)">${esc(CHAT_WITH.name)} ko pehla message bhejo!</p></div>`;
+    return;
+  }
+  let html='',lastDate='';
+  msgs.forEach(m=>{
+    const dt=new Date(m.ts);
+    const ds=dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+    if(ds!==lastDate){ html+=`<div class="day-divider">— ${ds} —</div>`; lastDate=ds; }
+    const isOut=m.from===ME.username;
+    html+=`<div class="msg-bubble ${isOut?'out':'in'}">
+      ${!isOut?`<div class="msg-sender">${esc(m.fromName)}</div>`:''}
+      ${esc(m.text).replace(/\n/g,'<br>')}
+      <div class="msg-ts">${dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`;
+  });
+  box.innerHTML=html;
+  if(atBottom) box.scrollTop=box.scrollHeight;
+}
+
+// ── Send Message ─────────────────────────────────────────────
+window.sendMsg=async function(){
+  const inp=document.getElementById('msg-inp');
+  const text=inp.value.trim();
+  if(!text||!CHAT_WITH) return;
+  document.getElementById('send-btn').disabled=true;
+  inp.value=''; inp.style.height='auto';
+  try{
+    await push(ref(db,msgPath()),{from:ME.username,fromName:ME.name,to:CHAT_WITH.username,text,ts:Date.now()});
+  }catch(e){ inp.value=text; alert('Message nahi gaya: '+e.message); }
+  document.getElementById('send-btn').disabled=false;
+  inp.focus();
+};
+
+window.handleKey=function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} };
+window.autoResize=function(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; };
+
+// ── Auto Init ────────────────────────────────────────────────
+const saved=localStorage.getItem(STORAGE_KEY);
+if(saved){ try{ document.getElementById('setup-screen').style.display='none'; bootFirebase(JSON.parse(saved)); }catch(e){ localStorage.removeItem(STORAGE_KEY); } }
+</script>
+</body>
+</html>
