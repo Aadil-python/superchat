@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ChatWave ✦</title>
+<title>Sivraj chat ✦</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -184,7 +184,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .empty-users{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;line-height:1.7}
 
 /* ─── CHAT AREA ─── */
-.chat-area{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.chat-area{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;position:relative;overflow:hidden}
 #welcome-pane{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:12px;color:var(--text3);
@@ -193,7 +193,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .welcome-icon{font-size:64px;opacity:.6;margin-bottom:4px}
 #welcome-pane h2{font-size:18px;font-weight:700;color:var(--text2)}
 #welcome-pane p{font-size:13px;text-align:center;max-width:260px;line-height:1.6}
-#chat-pane{display:none;flex-direction:column;flex:1}
+#chat-pane{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 #chat-pane.on{display:flex}
 
 /* Chat header */
@@ -212,6 +212,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .messages{
   flex:1;overflow-y:auto;padding:18px 16px;
   display:flex;flex-direction:column;gap:3px;
+  min-height:0;
   background:linear-gradient(180deg,#060f1e 0%,#07101f 100%);
   background-image:
     radial-gradient(ellipse 50% 30% at 90% 10%,rgba(0,100,60,.08),transparent),
@@ -315,7 +316,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 
 /* Emoji picker */
 .emoji-picker{
-  position:absolute;bottom:72px;left:14px;
+  position:absolute;bottom:100%;left:0;margin-bottom:8px;
   background:var(--surface2);border:1px solid var(--border2);
   border-radius:16px;padding:12px;z-index:50;
   display:none;
@@ -448,8 +449,8 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
       <div class="typing-bubble" id="typing-bubble">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
-      <div class="emoji-picker" id="emoji-picker"></div>
-      <div class="inp-wrap">
+      <div class="inp-wrap" style="position:relative">
+        <div class="emoji-picker" id="emoji-picker"></div>
         <div class="inp-box">
           <button class="emoji-btn" onclick="toggleEmoji(event)" title="Emoji">😊</button>
           <textarea id="msg-inp" rows="1" placeholder="Type a message…"
